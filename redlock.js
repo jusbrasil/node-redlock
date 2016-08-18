@@ -10,8 +10,26 @@ if(typeof EventEmitter.EventEmitter === 'function')
 
 
 // constants
-var unlockScript = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end';
-var extendScript = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("pexpire", KEYS[1], ARGV[2]) else return 0 end';
+var unlockScript = `
+  if redis.call("get", KEYS[1]) == ARGV[1] then
+    redis.call("zrem", KEYS[2], ARGV[1])
+    return redis.call("del", KEYS[1])
+  else
+    return 0
+  end
+`;
+var extendScript = `
+  if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("pexpire", KEYS[1], ARGV[2]) else return 0 end
+`;
+var acquireLockScript = `
+  redis.call("zadd", KEYS[2], ARGV[2], ARGV[1]);
+  redis.call("pexpire", KEYS[2], ARGV[3]);
+  if redis.call("zrange", KEYS[2], 0, 0)[1] == ARGV[1] then
+    return redis.call("set", KEYS[1], ARGV[1], "NX", "PX", ARGV[3])
+  else
+    return 0
+  end
+`;
 
 // defaults
 var defaults = {
@@ -160,7 +178,7 @@ Redlock.prototype.unlock = function unlock(lock, callback) {
 
 		// release the lock on each server
 		self.servers.forEach(function(server){
-			server.eval(unlockScript, 1, lock.resource, lock.value, loop);
+			server.eval(unlockScript, 2, lock.resource, `order:${lock.resource}`, lock.value, loop);
 		});
 
 		function loop(err, response) {
@@ -246,6 +264,7 @@ Redlock.prototype.extend = function extend(lock, ttl, callback) {
 // ```
 Redlock.prototype._lock = function _lock(resource, value, ttl, callback) {
 	var self = this;
+  var score = new Date().getTime();
 	return new Promise(function(resolve, reject) {
 		var request;
 
@@ -257,7 +276,7 @@ Redlock.prototype._lock = function _lock(resource, value, ttl, callback) {
 		if(value === null) {
 			value = self._random();
 			request = function(server, loop){
-				return server.set(resource, value, 'NX', 'PX', ttl, loop);
+				return server.eval(acquireLockScript, 2, resource, `order:${resource}`, value, score, ttl, loop);
 			};
 		}
 
