@@ -23,9 +23,9 @@ var extendScript = `
 `;
 var acquireLockScript = `
   redis.call("zadd", KEYS[2], ARGV[2], ARGV[1]);
-  redis.call("pexpire", KEYS[2], ARGV[3]);
-  if redis.call("zrange", KEYS[2], 0, 0)[1] == ARGV[1] then
-    return redis.call("set", KEYS[1], ARGV[1], "NX", "PX", ARGV[3])
+  if redis.call("zrangebyscore", KEYS[2], ARGV[3], ARGV[3]+ARGV[4], "LIMIT", 0, 1)[1] == ARGV[1] then
+    redis.call("pexpire", KEYS[2], ARGV[4]);
+    return redis.call("set", KEYS[1], ARGV[1], "NX", "PX", ARGV[4])
   else
     return 0
   end
@@ -276,7 +276,17 @@ Redlock.prototype._lock = function _lock(resource, value, ttl, callback) {
 		if(value === null) {
 			value = self._random();
 			request = function(server, loop){
-				return server.eval(acquireLockScript, 2, resource, `order:${resource}`, value, score, ttl, loop);
+				return server.eval(
+          acquireLockScript,
+          2,
+          resource,
+          `order:${resource}`,
+          value,
+          score,
+          new Date().getTime() - ttl,
+          ttl,
+          loop
+        );
 			};
 		}
 

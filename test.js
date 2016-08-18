@@ -57,6 +57,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 
@@ -178,6 +179,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 		});
@@ -188,6 +190,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 
@@ -304,6 +307,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 		});
@@ -314,6 +318,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 
@@ -404,6 +409,7 @@ function test(name, clients){
 				var l = clients.length; function cb(e){ if(e) err = e; l--; if(l === 0) done(err); }
 				for (var i = clients.length - 1; i >= 0; i--) {
 					clients[i].del(resource, cb);
+					clients[i].del('order:' + resource, cb);
 				}
 			});
 		});
